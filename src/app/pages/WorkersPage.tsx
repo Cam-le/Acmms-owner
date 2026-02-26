@@ -1,62 +1,30 @@
-import { useState } from "react";
-import { Search, Plus, Eye, Edit, Trash2, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Eye, Edit, Trash2, X, Loader2 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import * as Select from "@radix-ui/react-select";
-
-interface Worker {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  status: "active" | "inactive";
-  dateJoined: string;
-  password?: string;
-}
-
-const mockWorkers: Worker[] = [
-  {
-    id: "1",
-    name: "Maria Garcia",
-    email: "maria.garcia@farm.com",
-    phone: "0909993399",
-    role: "Người làm nông",
-    status: "active",
-    dateJoined: "15/03/2024",
-  },
-  {
-    id: "2",
-    name: "James Wilson",
-    email: "james.wilson@farm.com",
-    phone: "0909883399",
-    role: "Chuyên gia",
-    status: "active",
-    dateJoined: "22/07/2024",
-  },
-  {
-    id: "3",
-    name: "David Brown",
-    email: "david.brown@farm.com",
-    phone: "0909773399",
-    role: "Người làm nông",
-    status: "inactive",
-    dateJoined: "10/01/2024",
-  },
-];
-
-const roles = ["Người Làm Nông", "Chuyên Gia"];
+import { Worker } from "../../data/mockData";
+import { roles } from "../../data/mockData";
+import {
+  fetchWorkers,
+  createWorker,
+  updateWorker,
+  deleteWorker,
+} from "../../api/mockApi";
 
 export function WorkersPage() {
-  const [workers, setWorkers] = useState<Worker[]>(mockWorkers);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [workerToDelete, setWorkerToDelete] = useState<Worker | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -65,6 +33,24 @@ export function WorkersPage() {
     password: "",
     confirmPassword: "",
   });
+
+  // Load workers on mount
+  useEffect(() => {
+    loadWorkers();
+  }, []);
+
+  const loadWorkers = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchWorkers();
+      setWorkers(data);
+    } catch (error) {
+      console.error("Error loading workers:", error);
+      alert("Không thể tải danh sách nhân viên");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredWorkers = workers.filter((worker) => {
     const matchesSearch =
@@ -79,52 +65,78 @@ export function WorkersPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleAddWorker = () => {
+  const handleAddWorker = async () => {
     if (formData.password !== formData.confirmPassword) {
       alert("Mật khẩu không khớp!");
       return;
     }
 
-    const newWorker: Worker = {
-      id: Date.now().toString(),
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      role: formData.role,
-      status: "active",
-      dateJoined: new Date().toLocaleDateString("vi-VN"),
-    };
+    try {
+      setSubmitting(true);
+      const newWorker = await createWorker({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        status: "active",
+        dateJoined: new Date().toLocaleDateString("vi-VN"),
+      });
 
-    setWorkers([...workers, newWorker]);
-    setIsAddModalOpen(false);
-    resetForm();
+      setWorkers([...workers, newWorker]);
+      setIsAddModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error creating worker:", error);
+      alert("Không thể tạo nhân viên mới");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleEditWorker = () => {
+  const handleEditWorker = async () => {
     if (!selectedWorker) return;
 
-    setWorkers(
-      workers.map((w) =>
-        w.id === selectedWorker.id
-          ? {
-              ...w,
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              role: formData.role,
-            }
-          : w
-      )
-    );
-    setIsEditModalOpen(false);
-    resetForm();
+    try {
+      setSubmitting(true);
+      const updatedWorker = await updateWorker(selectedWorker.id, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+      });
+
+      if (updatedWorker) {
+        setWorkers(
+          workers.map((w) => (w.id === selectedWorker.id ? updatedWorker : w)),
+        );
+        setIsEditModalOpen(false);
+        resetForm();
+      }
+    } catch (error) {
+      console.error("Error updating worker:", error);
+      alert("Không thể cập nhật thông tin nhân viên");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDeleteWorker = () => {
+  const handleDeleteWorker = async () => {
     if (!workerToDelete) return;
-    setWorkers(workers.filter((w) => w.id !== workerToDelete.id));
-    setIsDeleteDialogOpen(false);
-    setWorkerToDelete(null);
+
+    try {
+      setSubmitting(true);
+      const success = await deleteWorker(workerToDelete.id);
+      if (success) {
+        setWorkers(workers.filter((w) => w.id !== workerToDelete.id));
+        setIsDeleteDialogOpen(false);
+        setWorkerToDelete(null);
+      }
+    } catch (error) {
+      console.error("Error deleting worker:", error);
+      alert("Không thể xóa nhân viên");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -170,12 +182,22 @@ export function WorkersPage() {
       .slice(0, 2);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-[#009689] animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#115e59]">Quản lý nhân viên</h1>
+          <h1 className="text-2xl font-bold text-[#115e59]">
+            Quản lý nhân viên
+          </h1>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
@@ -240,23 +262,40 @@ export function WorkersPage() {
           <table className="w-full">
             <thead className="bg-[#f8fafc] border-b border-[#e2e8f0]">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">Họ Tên</th>
-                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">Email</th>
-                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">Số điện thoại</th>
-                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">Vai trò</th>
-                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">Trạng thái</th>
-                <th className="text-center px-6 py-4 text-sm font-normal text-[#62748e]">Thao Tác</th>
+                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">
+                  Họ Tên
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">
+                  Email
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">
+                  Số điện thoại
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">
+                  Vai trò
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-normal text-[#62748e]">
+                  Trạng thái
+                </th>
+                <th className="text-center px-6 py-4 text-sm font-normal text-[#62748e]">
+                  Thao Tác
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredWorkers.map((worker) => (
-                <tr key={worker.id} className="border-b border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors">
+                <tr
+                  key={worker.id}
+                  className="border-b border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#009689] rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {getInitials(worker.name)}
                       </div>
-                      <span className="font-bold text-[#0f766e]">{worker.name}</span>
+                      <span className="font-bold text-[#0f766e]">
+                        {worker.name}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[#45556c]">{worker.email}</td>
@@ -270,7 +309,9 @@ export function WorkersPage() {
                           : "bg-[#f1f5f9] text-[#64748b]"
                       }`}
                     >
-                      {worker.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                      {worker.status === "active"
+                        ? "Hoạt động"
+                        : "Không hoạt động"}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -330,18 +371,24 @@ export function WorkersPage() {
                   type="text"
                   placeholder="Nhập họ tên đầy đủ"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   placeholder="worker@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
@@ -354,20 +401,30 @@ export function WorkersPage() {
                   type="tel"
                   placeholder="Nhập số điện thoại"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Vai Trò</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Vai Trò
+                </label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 >
                   {roles.map((role) => (
-                    <option key={role} value={role} className="text-slate-900 bg-white">
+                    <option
+                      key={role}
+                      value={role}
+                      className="text-slate-900 bg-white"
+                    >
                       {role}
                     </option>
                   ))}
@@ -375,12 +432,16 @@ export function WorkersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Mật khẩu
+                </label>
                 <input
                   type="password"
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
@@ -394,7 +455,10 @@ export function WorkersPage() {
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={(e) =>
-                    setFormData({ ...formData, confirmPassword: e.target.value })
+                    setFormData({
+                      ...formData,
+                      confirmPassword: e.target.value,
+                    })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
@@ -404,14 +468,17 @@ export function WorkersPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                disabled={submitting}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
               >
                 Hủy bỏ
               </button>
               <button
                 onClick={handleAddWorker}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-[#009689] text-white hover:bg-[#007f73] transition-colors"
+                disabled={submitting}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-[#009689] text-white hover:bg-[#007f73] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Tạo mới
               </button>
             </div>
@@ -447,12 +514,16 @@ export function WorkersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-1">Họ và tên</label>
+                  <label className="block text-sm font-medium text-slate-500 mb-1">
+                    Họ và tên
+                  </label>
                   <p className="text-slate-900">{selectedWorker.name}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-slate-500 mb-1">
+                    Email
+                  </label>
                   <p className="text-slate-900">{selectedWorker.email}</p>
                 </div>
 
@@ -464,7 +535,9 @@ export function WorkersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-1">Vai trò</label>
+                  <label className="block text-sm font-medium text-slate-500 mb-1">
+                    Vai trò
+                  </label>
                   <p className="text-slate-900">{selectedWorker.role}</p>
                 </div>
 
@@ -480,14 +553,18 @@ export function WorkersPage() {
                           : "bg-[#f1f5f9] text-[#64748b]"
                       }`}
                     >
-                      {selectedWorker.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                      {selectedWorker.status === "active"
+                        ? "Hoạt động"
+                        : "Không hoạt động"}
                     </span>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-500 mb-1">
                       Ngày gia nhập
                     </label>
-                    <p className="text-slate-900">{selectedWorker.dateJoined}</p>
+                    <p className="text-slate-900">
+                      {selectedWorker.dateJoined}
+                    </p>
                   </div>
                 </div>
 
@@ -530,17 +607,23 @@ export function WorkersPage() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
@@ -552,20 +635,30 @@ export function WorkersPage() {
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Vai trò
+                </label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
                 >
                   {roles.map((role) => (
-                    <option key={role} value={role} className="text-slate-900 bg-white">
+                    <option
+                      key={role}
+                      value={role}
+                      className="text-slate-900 bg-white"
+                    >
                       {role}
                     </option>
                   ))}
@@ -576,14 +669,17 @@ export function WorkersPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                disabled={submitting}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
               >
                 Hủy bỏ
               </button>
               <button
                 onClick={handleEditWorker}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-[#009689] text-white hover:bg-[#007f73] transition-colors"
+                disabled={submitting}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-[#009689] text-white hover:bg-[#007f73] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Lưu thay đổi
               </button>
             </div>
@@ -592,7 +688,10 @@ export function WorkersPage() {
       </Dialog.Root>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog.Root open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog.Root
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-40 animate-in fade-in" />
           <AlertDialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-xl shadow-2xl p-6 animate-in fade-in zoom-in-95">
@@ -601,20 +700,25 @@ export function WorkersPage() {
             </AlertDialog.Title>
             <AlertDialog.Description className="text-sm text-slate-600 mb-6">
               Bạn có chắc chắn muốn xóa nhân viên{" "}
-              <span className="font-semibold">{workerToDelete?.name}</span> không? Hành động này
-              không thể hoàn tác.
+              <span className="font-semibold">{workerToDelete?.name}</span>{" "}
+              không? Hành động này không thể hoàn tác.
             </AlertDialog.Description>
             <div className="flex gap-3 justify-end">
               <AlertDialog.Cancel asChild>
-                <button className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors">
+                <button
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+                >
                   Hủy bỏ
                 </button>
               </AlertDialog.Cancel>
               <AlertDialog.Action asChild>
                 <button
                   onClick={handleDeleteWorker}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Xóa nhân viên
                 </button>
               </AlertDialog.Action>

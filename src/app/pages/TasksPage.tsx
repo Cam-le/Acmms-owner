@@ -44,6 +44,7 @@ export function TasksPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
@@ -73,6 +74,11 @@ export function TasksPage() {
   const openViewModal = (task: Task) => {
     setSelectedTask(task);
     setIsViewModalOpen(true);
+  };
+
+  const openEditModal = (task: Task) => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
   };
 
   const openDeleteDialog = (task: Task) => {
@@ -288,7 +294,10 @@ export function TasksPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-[#009689] hover:bg-[#dcfce7] rounded-[10px] transition-colors">
+                          <button
+                            onClick={() => openEditModal(task)}
+                            className="p-2 text-[#009689] hover:bg-[#dcfce7] rounded-[10px] transition-colors"
+                          >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
@@ -958,6 +967,104 @@ export function TasksPage() {
                 >
                   Đóng
                 </button>
+              </div>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Edit Task Modal */}
+      <Dialog.Root open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40 animate-in fade-in" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl bg-white rounded-xl shadow-2xl p-6 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <Dialog.Title className="text-xl font-bold text-[#1e293b]">
+                Chỉnh sửa công việc
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button className="p-1 text-slate-400 hover:text-slate-600 rounded">
+                  <X className="w-5 h-5" />
+                </button>
+              </Dialog.Close>
+            </div>
+            <Dialog.Description className="sr-only">
+              Chỉnh sửa thông tin công việc
+            </Dialog.Description>
+
+            {selectedTask && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Tên công việc
+                  </label>
+                  <input
+                    type="text"
+                    defaultValue={selectedTask.name}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Mô tả
+                  </label>
+                  <textarea
+                    defaultValue={selectedTask.description}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009689] focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Khu vực
+                    </label>
+                    <select
+                      defaultValue={selectedTask.area}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#009689]"
+                    >
+                      <option value="Khu A">Khu A</option>
+                      <option value="Khu B">Khu B</option>
+                      <option value="Khu C">Khu C</option>
+                      <option value="Khu D">Khu D</option>
+                      <option value="Khu E">Khu E</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Trạng thái
+                    </label>
+                    <select
+                      defaultValue={selectedTask.status}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#009689]"
+                    >
+                      <option value="pending">Chưa xử lý</option>
+                      <option value="in-progress">Đang xử lý</option>
+                      <option value="completed">Hoàn tất</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-6 border-t border-[#e2e8f0]">
+                  <button
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 border border-[#e2e8f0] hover:bg-slate-100 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={() => {
+                      // TODO: Implement update logic here
+                      setIsEditModalOpen(false);
+                    }}
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-[#009689] text-white hover:bg-[#007f73] transition-colors"
+                  >
+                    Lưu thay đổi
+                  </button>
+                </div>
               </div>
             )}
           </Dialog.Content>

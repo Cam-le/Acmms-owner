@@ -191,12 +191,12 @@ export const login = async (
   await delay(API_DELAY);
 
   // Mock authentication logic
-  if (email === "admin@farm.com" && password === "admin123") {
+  if (email && password) {
     return {
       success: true,
       user: {
         name: "Admin User",
-        email: "admin@farm.com",
+        email: email,
       },
     };
   }
@@ -204,27 +204,6 @@ export const login = async (
   return {
     success: false,
     error: "Email hoặc mật khẩu không đúng",
-  };
-};
-
-/**
- * Login with Google (mock)
- * Real API: POST /api/auth/google
- */
-export const loginWithGoogle = async (): Promise<{
-  success: boolean;
-  user?: { name: string; email: string };
-  error?: string;
-}> => {
-  await delay(API_DELAY);
-
-  // Mock Google authentication
-  return {
-    success: true,
-    user: {
-      name: "Google User",
-      email: "user@gmail.com",
-    },
   };
 };
 

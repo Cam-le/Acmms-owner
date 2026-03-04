@@ -4,6 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { WorkersPage } from "./pages/WorkersPage";
 import { TasksPage } from "./pages/TasksPage";
 import { CropsPage } from "./pages/CropsPage";
+import { FarmPage } from "./pages/FarmPage";
 import { AppLayout } from "./components/Layout";
 
 export const router = createBrowserRouter([
@@ -22,6 +23,10 @@ export const router = createBrowserRouter([
       {
         path: "dashboard",
         Component: DashboardPage,
+      },
+      {
+        path: "farm",
+        Component: FarmPage,
       },
       {
         path: "workers",

@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   ChevronUp,
   ChevronDown,
+  ArrowUpDown,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Select from "@radix-ui/react-select";
@@ -39,7 +40,7 @@ const mockCrops: Crop[] = [
     soilType: "Đất Pha Cát",
     status: "Đang sử dụng",
     image:
-      "https://images.unsplash.com/photo-1594282442066-d3e5ea0e6b0b?w=100&h=100&fit=crop",
+      "https://cdn.lottemart.vn/media/description/product/cache/2292090000000-DT-1.jpeg.webp",
     description:
       "Bắp cải trắng là loại phổ biến nhất, có lá màu xanh nhạt đến trắng, giòn ngọt, thích hợp cho nhiều món ăn.",
     plantDistance: { row: 40, column: 40 },
@@ -52,7 +53,7 @@ const mockCrops: Crop[] = [
     soilType: "Đất Thịt",
     status: "Đang sử dụng",
     image:
-      "https://images.unsplash.com/photo-1556801712-76c8d2b88b5b?w=100&h=100&fit=crop",
+      "https://cdn.tgdd.vn/Products/Images/8785/234102/bhx/bap-cai-tim-202312281023047777.jpg",
     description:
       "Bắp cải tím có màu đỏ tím đặc trưng, giàu chất chống oxy hóa, thích hợp làm salad và muối chua.",
     plantDistance: { row: 45, column: 45 },
@@ -77,8 +78,7 @@ const mockCrops: Crop[] = [
     growthPeriod: 90,
     soilType: "Đất Sét",
     status: "Không sử dụng",
-    image:
-      "https://images.unsplash.com/photo-1615485500685-37937a640f4d?w=100&h=100&fit=crop",
+    image: "https://dalatfarm.net/wp-content/uploads/2021/07/bap-cai-baby.jpg",
     description:
       "Bắp cải Bruxen (Brussels sprouts) mọc thành từng búp nhỏ trên thân, có vị đắng nhẹ, thích hợp nướng hoặc luộc.",
     plantDistance: { row: 50, column: 50 },
@@ -90,8 +90,7 @@ const mockCrops: Crop[] = [
     growthPeriod: 60,
     soilType: "Đất Pha Cát",
     status: "Đang sử dụng",
-    image:
-      "https://images.unsplash.com/photo-1584868388793-4d2c7e5cdeb0?w=100&h=100&fit=crop",
+    image: "https://cdn.tgdd.vn/2021/05/CookProduct/thumb1-1200x676.jpg",
     description:
       "Bắp cải thảo (Napa cabbage) có hình dạng dài, lá mềm, ngọt, thích hợp làm kim chi và các món xào.",
     plantDistance: { row: 30, column: 30 },
@@ -236,7 +235,7 @@ export function CropsPage() {
 
       {/* Search Bar */}
       <div className="bg-white rounded-lg border border-[#e2e8f0] shadow-sm p-4">
-        <div className="relative max-w-md">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#90A1B9]" />
           <input
             type="text"
@@ -262,12 +261,15 @@ export function CropsPage() {
               >
                 <div className="flex items-center gap-2">
                   <span>Thời kỳ sinh trưởng</span>
-                  {sortField === "growthPeriod" &&
-                    (sortDirection === "asc" ? (
+                  {sortField === "growthPeriod" ? (
+                    sortDirection === "asc" ? (
                       <ChevronUp className="w-4 h-4" />
                     ) : (
                       <ChevronDown className="w-4 h-4" />
-                    ))}
+                    )
+                  ) : (
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[#90A1B9]" />
+                  )}
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-[#62748e] uppercase tracking-wider">
@@ -279,12 +281,15 @@ export function CropsPage() {
               >
                 <div className="flex items-center gap-2">
                   <span>Trạng thái</span>
-                  {sortField === "status" &&
-                    (sortDirection === "asc" ? (
+                  {sortField === "status" ? (
+                    sortDirection === "asc" ? (
                       <ChevronUp className="w-4 h-4" />
                     ) : (
                       <ChevronDown className="w-4 h-4" />
-                    ))}
+                    )
+                  ) : (
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[#90A1B9]" />
+                  )}
                 </div>
               </th>
               <th className="px-6 py-4 text-center text-xs font-bold text-[#62748e] uppercase tracking-wider">

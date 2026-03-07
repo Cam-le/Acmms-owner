@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router";
 import {
   LayoutDashboard,
@@ -26,13 +26,6 @@ export function AppLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated");
-    if (!isAuthenticated) {
-      navigate("/login");
-    }
-  }, [navigate]);
-
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     navigate("/login");
@@ -43,7 +36,6 @@ export function AppLayout() {
     { icon: Tractor, label: "Trang trại", to: "/farm" },
     { icon: CalendarDays, label: "Mùa vụ", to: "/seasons" },
     { icon: MapPin, label: "Khu đất", to: "/lands" },
-    { icon: Layers, label: "Luống trồng", to: "/plots" },
     { icon: Sprout, label: "Cây trồng", to: "/crops" },
     { icon: Users, label: "Nhân viên", to: "/workers" },
     { icon: Briefcase, label: "Công việc", to: "/tasks" },
@@ -54,8 +46,8 @@ export function AppLayout() {
     <div className="flex h-screen bg-[#f1f5f9] overflow-hidden font-sans">
       {/* Sidebar */}
       <aside
-        className={`${isSidebarCollapsed ? "w-[80px]" : "w-[260px]"} bg-[#009689] flex flex-col shrink-0 text-white shadow-xl z-20 transition-all duration-300`
-      }>
+        className={`${isSidebarCollapsed ? "w-[80px]" : "w-[260px]"} bg-[#009689] flex flex-col shrink-0 text-white shadow-xl z-20 transition-all duration-300`}
+      >
         {/* Logo */}
         <div className="h-[80px] flex items-center px-6 gap-3 shrink-0">
           <div className="w-10 h-10 bg-[#ffffff33] rounded-[10px] flex items-center justify-center shadow-sm shrink-0">
@@ -63,8 +55,12 @@ export function AppLayout() {
           </div>
           {!isSidebarCollapsed && (
             <div>
-              <h1 className="font-bold text-lg leading-tight tracking-wide">ACMMS</h1>
-              <p className="text-xs text-[#ffffffcc] font-medium">Quản trị hệ thống</p>
+              <h1 className="font-bold text-lg leading-tight tracking-wide">
+                ACMMS
+              </h1>
+              <p className="text-xs text-[#ffffffcc] font-medium">
+                Quản trị hệ thống
+              </p>
             </div>
           )}
         </div>
@@ -85,7 +81,9 @@ export function AppLayout() {
               title={isSidebarCollapsed ? item.label : undefined}
             >
               <item.icon className="w-5 h-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="text-[15px] truncate">{item.label}</span>}
+              {!isSidebarCollapsed && (
+                <span className="text-[15px] truncate">{item.label}</span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -103,8 +101,12 @@ export function AppLayout() {
                 {!isSidebarCollapsed && (
                   <>
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="font-medium text-sm truncate text-white">{user.name}</p>
-                      <p className="text-xs text-[#ffffffcc] truncate">{user.role}</p>
+                      <p className="font-medium text-sm truncate text-white">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-[#ffffffcc] truncate">
+                        {user.role}
+                      </p>
                     </div>
                     <ChevronUp className="w-4 h-4 text-[#ffffffcc]" />
                   </>
@@ -119,7 +121,9 @@ export function AppLayout() {
                 align="center"
               >
                 <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                  <p className="text-sm font-medium text-slate-900">{user.name}</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {user.name}
+                  </p>
                   <p className="text-xs text-slate-500 truncate">{user.role}</p>
                 </div>
 
@@ -141,13 +145,22 @@ export function AppLayout() {
       <button
         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         className="absolute left-[calc(260px-20px)] top-4 z-30 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-[#009689] hover:bg-[#f8fafc] transition-all border border-slate-200"
-        style={{ left: isSidebarCollapsed ? "calc(80px - 20px)" : "calc(260px - 20px)" }}
+        style={{
+          left: isSidebarCollapsed ? "calc(80px - 20px)" : "calc(260px - 20px)",
+        }}
       >
-        {isSidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+        {isSidebarCollapsed ? (
+          <ChevronRight className="w-5 h-5" />
+        ) : (
+          <ChevronLeft className="w-5 h-5" />
+        )}
       </button>
 
       {/* Logout Confirmation Dialog */}
-      <AlertDialog.Root open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+      <AlertDialog.Root
+        open={showLogoutConfirm}
+        onOpenChange={setShowLogoutConfirm}
+      >
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-50 animate-in fade-in" />
           <AlertDialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-xl shadow-2xl p-6 animate-in fade-in zoom-in-95">
